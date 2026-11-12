@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instagram Recovery Hub</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#16181d;--mute:#5d6470;--line:#e3e6ea;--acc:#3b5bdb;--acc-ink:#fff;--ok:#2b8a3e;--warn:#b35c00;--bad:#c92a2a;--chip:#eef1f5}
+@media (prefers-color-scheme:dark){:root{--bg:#121417;--card:#1b1e23;--ink:#e8eaed;--mute:#9aa1ab;--line:#2c3138;--acc:#748ffc;--acc-ink:#0b0d10;--ok:#69db7c;--warn:#ffa94d;--bad:#ff8787;--chip:#252a31}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+.top{max-width:1200px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.top h1{font-size:16px;margin:0 12px 0 0}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{border:0;background:none;color:var(--mute);padding:7px 11px;border-radius:8px;cursor:pointer;font:inherit}
+nav button.on{background:var(--chip);color:var(--ink);font-weight:600}
+main{max-width:1200px;margin:0 auto;padding:16px}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+h2{font-size:15px;margin:0 0 10px}
+h3{font-size:14px;margin:14px 0 6px}
+.grid{display:grid;gap:12px}
+.stats{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.stat b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.stat span{color:var(--mute);font-size:12px}
+.mute{color:var(--mute)}
+.small{font-size:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input[type=search],select,input[type=number]{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font:inherit}
+button.b{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:7px 11px;cursor:pointer;font:inherit}
+button.p{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);font-weight:600}
+button.b:disabled{opacity:.5;cursor:default}
+.chip{display:inline-block;background:var(--chip);border-radius:999px;padding:1px 8px;font-size:11px;margin-right:3px;white-space:nowrap}
+.chip.cf{background:#2b8a3e22;color:var(--ok)}.chip.fav{background:#e6770022;color:var(--warn)}.chip.bad{background:#c92a2a22;color:var(--bad)}
+table{width:100%;border-collapse:collapse}
+td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:12px;color:var(--mute);font-weight:600}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.done td{opacity:.45}
+tr.cur td{background:#3b5bdb18}
+a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
+.steps li{margin:6px 0}
+.steps label{cursor:pointer}
+.warn{border-left:4px solid var(--warn)}
+.bad{border-left:4px solid var(--bad)}
+.posts{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.post .strip{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px}
+.post .strip img,.post .strip video{height:120px;border-radius:6px;flex:none;background:var(--chip)}
+.post pre{white-space:pre-wrap;font:inherit;margin:8px 0;max-height:140px;overflow:auto}
+.post .strip .it{position:relative;flex:none;cursor:grab}
+.post .strip .it.off img,.post .strip .it.off video{opacity:.3}
+.post .strip .it.drop{outline:2px solid var(--acc);border-radius:6px}
+.post .strip .it .n{position:absolute;top:4px;left:4px;background:#000b;color:#fff;font-size:11px;font-weight:600;border-radius:99px;padding:0 6px;pointer-events:none}
+.post .strip .it .ctl{position:absolute;top:4px;right:4px;display:flex;gap:2px;opacity:0;transition:opacity .15s}
+.post .strip .it:hover .ctl,.post .strip .it:focus-within .ctl{opacity:1}
+@media (hover:none){.post .strip .it .ctl{opacity:1}}
+.post .strip .it .ctl button{border:0;background:#000b;color:#fff;border-radius:5px;font-size:11px;line-height:1;padding:4px 6px;cursor:pointer}
+.post .strip .it.ex img,.post .strip .it.ex video{outline:2px dashed var(--ok);outline-offset:-2px}
+.modal{position:fixed;inset:0;z-index:30;background:#000a;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal[hidden]{display:none}
+.modal-box{width:min(1100px,100%);max-height:92vh;overflow:auto;margin:0}
+.story.pick{cursor:pointer;border-radius:8px;position:relative}
+.story.pick .tick{display:none;position:absolute;top:6px;right:6px;background:var(--acc);color:var(--acc-ink);border-radius:99px;width:22px;height:22px;text-align:center;font-weight:700;line-height:22px}
+.story.pick.sel{outline:3px solid var(--acc);outline-offset:2px}
+.story.pick.sel .tick{display:block}
+.post .opt{margin:6px 0}
+.post select{max-width:100%;padding:5px 7px}
+.post.posted{border-color:#2b8a3e66}
+.apst{font-size:12px;margin-top:8px}
+.apst:empty{display:none}
+.apst ol{margin:4px 0 0;padding-left:18px;color:var(--mute)}
+.apst .err{color:var(--bad)}
+.apst .ok{color:var(--ok);font-weight:600}
+.apst .wait{color:var(--warn);font-weight:600}
+.linkbtn{border:0;background:none;color:var(--acc);cursor:pointer;font:inherit;padding:0}
+.stories{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+.story{position:relative}
+.story img,.story video{width:100%;aspect-ratio:9/16;object-fit:cover;border-radius:8px;background:var(--chip);display:block}
+.story .dt{font-size:11px;color:var(--mute)}
+.bar{height:8px;background:var(--chip);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--acc)}
+.kbd{font:11px ui-monospace,monospace;border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.sticky{position:sticky;top:58px;z-index:4}
+@media (max-width:700px){.hide-sm{display:none}.sticky{top:96px}}
+</style>
+</head>
+<body>
+<header><div class="top"><h1>Instagram Recovery Hub</h1>
+<nav id="nav"></nav>
+<span class="mute small" style="margin-left:auto" id="saveState"></span>
+</div></header>
+<main>
+
+<section id="start">
+  <div class="card"><h2>What's in the export</h2><div class="grid stats" id="stats"></div></div>
+  <div class="card bad">
+    <h2>First: try to get the original account back</h2>
+    <p>A recovered account keeps all its followers, posts, DMs and highlights; rebuilding can't bring all of that back. Appeal first, and keep going with this hub while you wait:</p>
+    <ol>
+      <li><b>Appeal in the app.</b> Log in to the disabled account: the notice offers a way to disagree with the decision and says how long you have. Don't miss that window. Save every reference number and reply.</li>
+      <li><b>Hacked?</b> Use <a href="https://www.instagram.com/hacked/" target="_blank" rel="noopener">instagram.com/hacked</a> with the email or phone number on the account.</li>
+      <li><b>If the appeal fails</b>, check whether your country has another route. <b>India:</b> Meta's <a href="https://help.meta.com/requests/1371776380779082/" target="_blank" rel="noopener">Grievance Officer</a>, then the <a href="https://gac.gov.in" target="_blank" rel="noopener">Grievance Appellate Committee</a> within 30 days of their reply. <b>EU:</b> a certified out-of-court dispute settlement body under the Digital Services Act.</li>
+    </ol>
+    <p class="small mute">Meta's Terms §3.1: if they disable your account, "you agree not to create another account without our permission". A new account can be removed for this, so move slowly: no bursts of follows or posts.</p>
+  </div>
+  <div class="card"><h2>Recovery checklist</h2><ol class="steps" id="steps"></ol></div>
+  <div class="card"><h2>Progress backup</h2>
+    <p class="small mute">Progress is saved in this browser only. Export it now and then.</p>
+    <div class="row"><button class="b" id="exportBtn">Export progress</button>
+    <label class="b">Import progress <input type="file" id="importFile" accept=".json" hidden></label>
+    <button class="b" id="resetBtn">Reset all</button></div>
+  </div>
+</section>
+
+<section id="people">
+  <div class="card sticky">
+    <div class="row">
+      <select id="pTier"></select>
+      <input type="search" id="pSearch" placeholder="Search username">
+      <label class="small"><input type="checkbox" id="pHideDone" checked> hide done</label>
+      <span class="mute small">Daily cap <input type="number" id="cap" min="1" max="200" style="width:64px"></span>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="b p" id="openNext">Open next profile</button>
+      <button class="b" id="markDone" disabled>Followed ✓ &amp; next</button>
+      <button class="b" id="markSkip" disabled>Skip &amp; next</button>
+      <span class="small mute hide-sm">Keys: <span class="kbd">N</span> open · <span class="kbd">D</span> followed · <span class="kbd">S</span> skip</span>
+      <span style="margin-left:auto" class="small" id="todayInfo"></span>
+    </div>
+    <div class="bar" style="margin-top:8px"><i id="pBar"></i></div>
+    <div class="small mute" id="pCount" style="margin-top:4px"></div>
+  </div>
+  <div class="card" style="padding:0 8px"><table><thead><tr><th></th><th>Username</th><th class="hide-sm">Why</th><th class="n">DMs</th><th class="n hide-sm">Story likes</th><th class="n hide-sm">Comments</th><th class="hide-sm">Followed since</th></tr></thead><tbody id="pBody"></tbody></table>
+  <div class="row" style="padding:10px"><button class="b" id="pMore">Show more</button></div></div>
+</section>
+
+<section id="posts">
+  <div class="card sticky" id="apCard">
+    <div class="row" style="justify-content:space-between">
+      <div class="row"><b>One-click posting</b><span class="chip bad" id="apConn">checking…</span><span class="small mute" id="apToday"></span></div>
+      <button class="b p" id="apNext" disabled>Post next (oldest first)</button>
+    </div>
+    <div class="row small" style="margin-top:8px;gap:14px">
+      <label><input type="checkbox" id="apReview"> Stop before Share (I'll press Share in Chrome)</label>
+      <label><input type="checkbox" id="apDate"> Add "Originally posted &lt;date&gt;" to captions</label>
+      <label><input type="checkbox" id="poArch" checked> Show archived</label>
+    </div>
+    <p class="small mute" id="apHelp" style="margin:8px 0 0"></p>
+  </div>
+  <div class="small mute" id="poCount" style="margin:0 0 10px 2px"></div>
+  <div class="grid posts" id="poGrid"></div>
+  <input type="file" id="apFile" multiple accept="image/jpeg,image/png,image/heic,image/heif,image/webp,image/avif,video/mp4,video/quicktime,.heic,.heif" hidden>
+  <div class="modal" id="stModal" hidden>
+    <div class="card modal-box">
+      <div class="row" style="justify-content:space-between"><b id="smTitle">Add from your stories</b><button class="b" id="smClose">Close</button></div>
+      <div class="row small" style="margin:10px 0"><select id="smYear"></select><select id="smMonth"></select><label><input type="checkbox" id="smStar"> only ★ picked (Stories tab)</label><span class="mute" id="smCount"></span></div>
+      <div class="grid stories" id="smGrid"></div>
+      <div class="row" style="justify-content:flex-end;margin-top:12px;position:sticky;bottom:0;background:var(--card);padding:8px 0"><span class="small mute">Click stories to select them; they're added in date order. Opens on the month of this post.</span><button class="b p" id="smAdd" disabled>Add selected</button></div>
+    </div>
+  </div>
+</section>
+
+<section id="saved">
+  <div class="card"><div class="row">
+    <select id="svCol"></select>
+    <button class="b p" id="svNext">Open next &amp; mark saved</button>
+    <label class="small"><input type="checkbox" id="svHideDone" checked> hide done</label>
+    <span class="small mute" id="svCount"></span></div>
+    <p class="small mute" style="margin:8px 0 0">Create the collection in the app first, then open each post and tap Save into it. Some posts may have been deleted by their owners.</p>
+  </div>
+  <div class="card" style="padding:0 8px"><table><thead><tr><th></th><th>Post</th><th>Owner</th><th class="hide-sm">Caption</th></tr></thead><tbody id="svBody"></tbody></table></div>
+</section>
+
+<section id="chats">
+  <div class="card"><div class="row"><input type="search" id="chSearch" placeholder="Search name or username">
+    <select id="chBox"><option value="">All threads</option><option value="inbox">Inbox</option><option value="message_requests">Message requests</option><option value="g">Group chats</option></select>
+    <span class="small mute" id="chCount"></span></div>
+    <p class="small mute" style="margin:8px 0 0">DMs can't be imported into another account. They stay readable offline here; <b>Open</b> shows the full thread with photos and videos. Usernames are matched from other lists, so a few may be wrong or missing.</p></div>
+  <div class="card" style="padding:0 8px"><table><thead><tr><th>Chat</th><th class="hide-sm">Username(s)</th><th class="n">Msgs</th><th class="n hide-sm">Media</th><th class="hide-sm">Last</th><th></th></tr></thead><tbody id="chBody"></tbody></table>
+  <div class="row" style="padding:10px"><button class="b" id="chMore">Show more</button></div></div>
+</section>
+
+<section id="stories">
+  <div class="card"><div class="row"><select id="stYear"></select><select id="stMonth"></select><span class="small mute" id="stCount"></span>
+    <label class="small"><input type="checkbox" id="stPick"> show only ★ picks</label></div>
+    <p class="small mute" style="margin:8px 0 0">Every story, sorted by date, is also in <code>stories_by_date/YEAR/</code>. Star (★) the ones you want as Highlights, then post them from the phone. Posting a story you shot earlier than 24 hours ago adds a date sticker.</p></div>
+  <div class="grid stories" id="stGrid"></div>
+</section>
+
+<section id="lists">
+  <div class="card"><h2>Profile to re-create</h2><table id="profTbl"></table>
+  <p class="small mute">Profile photo: <code>upload_ready/profile_photo.jpg</code></p></div>
+  <div class="card"><h2>Close friends</h2><p class="small mute">Add them after they follow the new account.</p><div id="lCF"></div></div>
+  <div class="card"><h2>Hide story from</h2><div id="lHS"></div></div>
+  <div class="card"><h2>Blocked &amp; restricted</h2><p class="small mute">Block these from the new account too, if you still want to.</p><div id="lBL"></div></div>
+</section>
+</main>
+
+<script>
+const D = /*__DATA__*/null;
+const TIERS = {"1":"Close friends & favourites","2":"Mutuals you interact with","3":"Other mutuals","4":"Accounts you follow & engage with","5":"Other accounts you follow","6":"Followed you, you didn't follow back","7":"Your unaccepted follow requests","8":"Other","X":"Blocked/restricted"};
+const KEY = "igrec:v1";
+let S = {people:{}, saved:{}, posts:{}, steps:{}, stars:{}, log:{}, cap:25};
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
+let saveTimer;
+function save(){ clearTimeout(saveTimer); saveTimer = setTimeout(()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); $("#saveState").textContent = "Saved " + new Date().toLocaleTimeString(); }catch(e){ $("#saveState").textContent = "Couldn't save: export progress manually"; } }, 150); }
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today = () => new Date().toISOString().slice(0,10);
+const ig = u => "https://www.instagram.com/" + encodeURIComponent(u).replace(/%2E/g,".") + "/";
+const thumb = stem => "thumbs/" + stem + ".jpg";
+
+/* ---------- nav ---------- */
+const TABS = [["start","Start"],["people","People"],["posts","Posts"],["saved","Saved"],["chats","Chats"],["stories","Stories"],["lists","Profile & lists"]];
+$("#nav").innerHTML = TABS.map(([id,l]) => `<button data-t="${id}">${l}</button>`).join("");
+function show(id){ document.querySelectorAll("section").forEach(s=>s.classList.toggle("on", s.id===id)); document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on", b.dataset.t===id)); try{ localStorage.setItem(KEY+":tab", id); }catch(e){} if (id==="stories") renderStories(); if (id==="posts" && typeof apPoll==="function") apPoll(); }
+$("#nav").onclick = e => { if (e.target.dataset.t) show(e.target.dataset.t); };
+
+/* ---------- start ---------- */
+const s = D.S;
+const statList = [[s.following,"accounts you followed"],[s.followers,"followers"],[s.mutuals,"mutuals"],[s.close_friends,"close friends"],[s.posts,`posts (${s.posts_archived} archived)`],[s.stories,"stories"],[s.saved_posts,"saved posts"],[Object.keys(s.collections).length,"collections"],[s.chat_threads,"chat threads"],[s.chat_messages_total.toLocaleString(),"messages"]];
+$("#stats").innerHTML = statList.map(([n,l]) => `<div class="stat"><b>${esc(n)}</b><span>${esc(l)}</span></div>`).join("");
+const STEPS = [
+  ["backup","Back up the export zip in two places (e.g. Google Drive and an external disk). It is the only copy of your DMs and stories."],
+  ["grievance","Appeal the decision on the original account (see above). Note any reference numbers."],
+  ["gac","If the appeal fails: use any further route your country offers (see above)."],
+  ["profile","Set up the new profile: photo, name, bio, website, profile music, privacy. See 'Profile & lists'."],
+  ["announce","Tell people: story or WhatsApp status saying the old account was disabled, with the new handle."],
+  ["tier1","Follow and DM tier 1 (close friends & favourites)."],
+  ["mutuals","Follow mutuals (tiers 2–3) at the daily cap. Don't go faster."],
+  ["lists","Rebuild close friends, hide-story-from and block lists once people are back."],
+  ["posts","Repost posts from the Posts tab (one click each while the post helper runs), oldest first, a few a day."],
+  ["saved",`Re-create your saved collections (${Object.keys(s.collections || {}).length}) and re-save posts.`],
+  ["highlights","Pick stories for Highlights (★ in Stories tab) and post them."],
+];
+$("#steps").innerHTML = STEPS.map(([k,t]) => `<li><label><input type="checkbox" data-step="${k}" ${S.steps[k]?"checked":""}> ${esc(t)}</label></li>`).join("");
+$("#steps").onchange = e => { const k = e.target.dataset.step; if (k){ S.steps[k] = e.target.checked; save(); } };
+
+$("#exportBtn").onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:"application/json"})); a.download = "ig-recovery-progress-" + today() + ".json"; a.click(); };
+$("#importFile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const inc = JSON.parse(await f.text());
+    for (const k of ["people","saved","posts","steps","stars","po"]) if (inc[k]) S[k] = Object.assign(S[k] || {}, inc[k]);
+    if (inc.log) for (const [d,n] of Object.entries(inc.log)) S.log[d] = Math.max(S.log[d] || 0, n);
+    if (inc.cap) S.cap = inc.cap;
+    save(); setTimeout(() => location.reload(), 300);
+  } catch(err){ alert("Not a valid progress file"); }
+};
+$("#resetBtn").onclick = () => { if (confirm("Clear all progress in this browser?")) { try{ localStorage.removeItem(KEY); }catch(e){} location.reload(); } };
+
+/* ---------- people ---------- */
+const tierOpts = [["todo","Everyone you followed (tiers 1–5)"],["1",""],["2",""],["3",""],["4",""],["5",""],["6",""],["7",""],["8",""],["all","Everyone"]];
+const tierCount = t => D.P.filter(p=>p.t===t).length;
+$("#pTier").innerHTML = tierOpts.map(([v,l]) => `<option value="${v}">${esc(l || (v + " · " + TIERS[v] + " (" + tierCount(v) + ")"))}</option>`).join("");
+$("#cap").value = S.cap;
+$("#cap").onchange = e => { S.cap = Math.max(1, +e.target.value || 25); save(); renderPeople(); };
+let pLimit = 150, cur = null;
+function pList(){
+  const t = $("#pTier").value, q = $("#pSearch").value.trim().toLowerCase(), hide = $("#pHideDone").checked;
+  return D.P.filter(p => p.t !== "X" && (t==="all" || (t==="todo" ? "12345".includes(p.t) : p.t===t)) && (!q || p.u.toLowerCase().includes(q)) && (!hide || !S.people[p.u]));
+}
+function why(p){
+  const c = [];
+  if (p.cf) c.push('<span class="chip cf">close friend</span>');
+  if (p.fav) c.push('<span class="chip fav">favourite</span>');
+  if (p.m) c.push('<span class="chip">mutual</span>');
+  else if (p.fo) c.push('<span class="chip">you followed</span>');
+  else if (p.fl) c.push('<span class="chip">followed you</span>');
+  if (p.ps) c.push('<span class="chip">request pending</span>');
+  return c.join("");
+}
+function followedToday(){ return (S.log[today()]||0); }
+function renderPeople(){
+  const list = pList();
+  const all = D.P.filter(p => "12345".includes(p.t));
+  const done = all.filter(p => S.people[p.u]==="f").length;
+  $("#pBar").style.width = (100*done/all.length).toFixed(1)+"%";
+  $("#pCount").textContent = `${done} of ${all.length} followed back · ${Object.values(S.people).filter(v=>v==="s").length} skipped · showing ${Math.min(list.length,pLimit)} of ${list.length}`;
+  const ft = followedToday();
+  $("#todayInfo").innerHTML = `Today: <b>${ft}</b> / ${S.cap}` + (ft >= S.cap ? ' <span class="chip bad">cap reached: stop for today</span>' : "");
+  $("#pBody").innerHTML = list.slice(0,pLimit).map(p => `<tr data-u="${esc(p.u)}" class="${S.people[p.u]?"done":""} ${cur===p.u?"cur":""}">
+    <td><input type="checkbox" ${S.people[p.u]==="f"?"checked":""} title="Followed"></td>
+    <td><a href="${ig(p.u)}" target="igwin" rel="noopener">@${esc(p.u)}</a> <span class="small mute">${esc(p.t)}</span>${S.people[p.u]==="s"?' <span class="chip">skipped</span>':""}</td>
+    <td class="hide-sm">${why(p)}</td><td class="n">${p.dm||""}</td><td class="n hide-sm">${p.sl||""}</td><td class="n hide-sm">${(p.cm+p.sr)||""}</td><td class="hide-sm small mute">${esc(p.fs||p.fls)}</td></tr>`).join("");
+  $("#pMore").style.display = list.length > pLimit ? "" : "none";
+  $("#markDone").disabled = $("#markSkip").disabled = !cur;
+}
+function mark(u, v){
+  const prev = S.people[u];
+  if (v) S.people[u] = v; else delete S.people[u];
+  const d = today();
+  if (v==="f" && prev!=="f") S.log[d] = (S.log[d]||0)+1;
+  if (prev==="f" && v!=="f") S.log[d] = Math.max(0,(S.log[d]||0)-1);
+  save();
+}
+function openNext(){
+  if (followedToday() >= S.cap && !confirm(`You've hit today's cap (${S.cap}). Going faster risks an action block or ban on the new account. Open another anyway?`)) return;
+  const nx = pList().find(p => !S.people[p.u] && p.u !== cur) || pList().find(p => !S.people[p.u]);
+  if (!nx) { alert("Nothing left in this view."); return; }
+  cur = nx.u; window.open(ig(nx.u), "igwin"); renderPeople();
+  const row = document.querySelector(`#pBody tr[data-u="${CSS.escape(cur)}"]`); if (row) row.scrollIntoView({block:"center"});
+}
+$("#openNext").onclick = openNext;
+$("#markDone").onclick = () => { if (cur){ mark(cur,"f"); openNext(); } };
+$("#markSkip").onclick = () => { if (cur){ mark(cur,"s"); openNext(); } };
+$("#pBody").onchange = e => { const tr = e.target.closest("tr"); if (tr) { mark(tr.dataset.u, e.target.checked ? "f" : null); renderPeople(); } };
+$("#pBody").onclick = e => { const a = e.target.closest("a"); if (a) { cur = a.closest("tr").dataset.u; setTimeout(renderPeople, 0); } };
+["#pTier","#pHideDone"].forEach(id => $(id).onchange = () => { pLimit = 150; renderPeople(); });
+$("#pSearch").oninput = () => { pLimit = 150; renderPeople(); };
+$("#pMore").onclick = () => { pLimit += 300; renderPeople(); };
+document.addEventListener("keydown", e => {
+  if (!$("#people").classList.contains("on") || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k==="n") openNext(); else if (k==="d") $("#markDone").click(); else if (k==="s") $("#markSkip").click();
+});
+
+/* ---------- posts (+ one-click posting via tools/autopost.py on 127.0.0.1) ---------- */
+const AP = "http://127.0.0.1:8767";
+let apS = null, apTimer = null, apLocsLoaded = false;
+const apErr = {};
+S.po = S.po || {};
+async function apFetch(path, body){
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), body ? 8000 : 2500);
+  try {
+    const r = await fetch(AP + path, {method: body ? "POST" : "GET", cache: "no-store", signal: ctl.signal,
+      headers: Object.assign({"X-Post-Token": D.PT}, body ? {"Content-Type": "application/json"} : {}),
+      body: body ? JSON.stringify(body) : undefined});
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { const err = new Error(j.error || ("HTTP " + r.status)); err.code = j.code; throw err; }
+    return j;
+  } finally { clearTimeout(t); }
+}
+const locCands = i => (S.locs && S.locs[i]) || [];
+const locDefault = i => { const c = locCands(i); return c.length && (c[0].orig || c[0].dist <= 50) ? c[0].name : ""; };
+function poOpt(i){ const o = S.po[i] || {}; return {loc: o.loc ?? locDefault(i), tags: o.tags ?? true, arch: o.arch ?? !!D.PO[i].a}; }
+const distTxt = d => d <= 3 ? "same spot as the original" : d < 1000 ? d + " m from the original" : (d/1000).toFixed(1) + " km from the original";
+const mapLink = p => `<a target="_blank" rel="noopener" href="https://maps.google.com/?q=${esc(p.lat)},${esc(p.lng)}">map</a>`;
+function locSelect(i){
+  const p = D.PO[i]; if (!p.lat) return "";
+  const c = locCands(i), cur = poOpt(i).loc;
+  if (!c.length && !cur) return `<div class="small mute opt">📍 Place names load once the helper is running · ${mapLink(p)}</div>`;
+  const km = d => d < 1000 ? d + " m" : (d/1000).toFixed(1) + " km";
+  const opts = c.map(x => [x.name, x.name + " · " + (x.orig
+    ? "★ original location" + (x.dist == null ? " (not found near the original spot)" : x.dist > 50 ? ` (closest match ${km(x.dist)} away)` : "") + (x.addr ? " · " + x.addr : "")
+    : distTxt(x.dist))]);
+  if (cur && !c.some(x => x.name === cur)) opts.unshift([cur, cur + " · typed by you"]);
+  opts.push(["", "No location"], ["__custom", "Type a place name…"]);
+  return `<div class="row small opt" style="flex-wrap:nowrap">📍<select data-loc="${i}" style="flex:1;min-width:0">${opts.map(([v,l]) => `<option value="${esc(v)}" ${v===cur?"selected":""}>${esc(l)}</option>`).join("")}</select>${mapLink(p)}</div>`;
+}
+/* photo order per post. S.po[i].order: original item numbers + ids of added photos, in posting order.
+   S.po[i].skip: left-out originals. S.po[i].extra: [{id, src (path inside recovery/), vid, name, from}] */
+const keyOf = s => /^\d+$/.test(String(s)) ? +s : String(s);
+const poExtra = i => (S.po[i] || {}).extra || [];
+function poOrder(i){
+  const n = D.PO[i].items.length, o = S.po[i] || {}, ex = poExtra(i).map(x => x.id);
+  const ok = Array.isArray(o.order) && o.order.filter(k => typeof k === "number").length === n
+    && o.order.every(k => typeof k === "number" ? k >= 0 && k < n : ex.includes(k));
+  const ord = ok ? o.order.slice() : [...Array(n).keys()];
+  for (const id of ex) if (!ord.includes(id)) ord.push(id);
+  return ord;
+}
+const poSkip = i => new Set((S.po[i] || {}).skip || []);
+const poCount = i => poOrder(i).length - poSkip(i).size;
+function poSend(i){
+  const ex = Object.fromEntries(poExtra(i).map(x => [x.id, x.src])), sk = poSkip(i);
+  const out = poOrder(i).filter(k => !sk.has(k)).map(k => typeof k === "number" ? k : ex[k]);
+  return out.length === D.PO[i].items.length && out.every((k, n) => k === n) ? null : out;
+}
+function setOrder(i, ord, skip){ const o = (S.po[i] ||= {}); o.order = ord; if (skip) o.skip = [...skip]; if (!poSend(i)) { delete o.order; delete o.skip; } save(); rerenderCard(i); }
+function addExtras(i, items){
+  const o = (S.po[i] ||= {}), room = 20 - poCount(i);
+  if (items.length > room) { alert(`A post can have at most 20 photos/videos. This one has room for ${room} more.`); items = items.slice(0, Math.max(room, 0)); }
+  if (!items.length) return;
+  o.extra = poExtra(i).concat(items.map(x => ({id: "x" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ...x})));
+  o.order = poOrder(i); save(); rerenderCard(i);
+}
+function removeExtra(i, id){ const o = S.po[i]; o.extra = poExtra(i).filter(x => x.id !== id); o.order = (o.order || []).filter(k => k !== id); if (!o.extra.length) delete o.extra; setOrder(i, poOrder(i), poSkip(i)); }
+function stripHtml(p){
+  const ord = poOrder(p.i), sk = poSkip(p.i), ex = Object.fromEntries(poExtra(p.i).map(x => [x.id, x])), many = ord.length > 1; let n = 0;
+  const cells = ord.map(k => { const add = typeof k !== "number", it = add ? ex[k] : p.items[k], off = sk.has(k), num = off ? "out" : ++n;
+    const src = add ? it.src : it.src;
+    const media = it.vid ? `<video src="${esc(src)}" preload="metadata" muted controls></video>`
+      : `<img loading="lazy" src="${esc(add ? it.src : thumb(it.stem))}" alt="" draggable="false">`;
+    const x = add ? `<button data-rm="1" title="Remove this added photo">🗑</button>` : `<button data-tg="1" title="${off ? "Put it back" : "Leave this one out"}">${off ? "+" : "✕"}</button>`;
+    return `<div class="it${off ? " off" : ""}${add ? " ex" : ""}" ${many ? 'draggable="true"' : ""} data-i="${p.i}" data-k="${esc(k)}" ${add ? `title="Added: ${esc(it.name || "")}"` : ""}>${media}${many || add ? `<span class="n">${num}${add ? " +" : ""}</span><span class="ctl">${many ? `<button data-mv="-1" title="Move earlier">◀</button>` : ""}${x}${many ? `<button data-mv="1" title="Move later">▶</button>` : ""}</span>` : ""}</div>`; }).join("");
+  const custom = poSend(p.i), out = sk.size, added = poExtra(p.i).length;
+  const adders = `<button class="linkbtn" data-addpc="${p.i}">+ from computer</button> · <button class="linkbtn" data-addst="${p.i}">+ from stories</button>`;
+  const note = custom ? `<div class="small" style="margin-top:4px"><b>Your order</b>${out ? ` · ${out} left out` : ""}${added ? ` · ${added} added` : ""} · <button class="linkbtn" data-reset="${p.i}">reset</button> · ${adders}</div>`
+    : `<div class="small mute" style="margin-top:4px">${many ? "Drag photos (or hover: ◀ ▶) to reorder · ✕ leaves one out · " : ""}${adders}</div>`;
+  return `<div class="strip" style="margin-top:8px">${cells}</div>${note}<div class="small" id="apup-${p.i}"></div>`;
+}
+function cardHtml(p){ const o = poOpt(p.i); return `<div class="card post" id="po-${p.i}">
+    <div class="row" style="justify-content:space-between"><b>#${p.i+1} · ${esc((p.d||"").slice(0,10))}</b><span>${p.a?'<span class="chip">archived</span>':""}<span class="chip">${p.items.length} item${p.items.length>1?"s":""}</span></span></div>
+    ${stripHtml(p)}
+    <pre>${esc(p.c) || '<span class="mute">(no caption)</span>'}</pre>
+    ${locSelect(p.i)}
+    ${p.tg.length?`<div class="opt"><label class="small"><input type="checkbox" data-tags="${p.i}" ${o.tags?"checked":""}> 🏷 Tag ${p.tg.map(u => "@" + esc(u)).join(", ")}</label></div>`:""}
+    ${p.a?`<div class="opt"><label class="small"><input type="checkbox" data-arch="${p.i}" ${o.arch?"checked":""}> Archive after posting (it was archived before)</label></div>`:""}
+    <div class="small mute" style="margin:6px 0">Folder: <code>${esc(p.dir)}</code></div>
+    <div class="row"><button class="b p" data-ap="${p.i}" disabled>Post to new account</button><button class="b" data-copy="${p.i}">Copy caption</button><label class="small"><input type="checkbox" data-post="${p.i}" ${S.posts[p.i]?"checked":""}> reposted</label></div>
+    <div class="apst" id="apst-${p.i}"></div>
+  </div>`; }
+function renderPosts(){
+  const inc = $("#poArch").checked;
+  const list = D.PO.map((p,i)=>({...p,i})).filter(p => inc || !p.a);
+  $("#poCount").textContent = `${list.length} posts, oldest first: posting in this order keeps your grid in the same order as before · ${Object.keys(S.posts).length} marked reposted`;
+  $("#poGrid").innerHTML = list.map(cardHtml).join("");
+  apPaint();
+}
+function rerenderCard(i){ const el = $("#po-" + i); if (el) { el.outerHTML = cardHtml({...D.PO[i], i}); apPaint(); } }
+const HELP_OFF = `To post with one click, start the post helper and leave its window open: double-click <code>post_helper.bat</code> in the kit folder (Windows) or run <code>python3 recover.py post</code> (Mac/Linux). It opens Chrome; sign in to your new account there once (the follower checker uses the same sign-in). Prefer your phone? Each post also has a ready folder (see the card).`;
+const HELP_ON = `Each click uploads every photo and video in order with the Original crop, types the caption, tags people, sets the location and shares. Songs aren't in your export and instagram.com can't add music, so add one in the app afterwards if you want. Keep it to a few posts a day.`;
+function apPaint(){
+  const s = apS, conn = !!(s && s.ok), ready = conn && s.ready, can = ready && !s.busy;
+  const chip = $("#apConn");
+  chip.textContent = !conn ? "helper not running" : !s.ready ? "helper starting…" : s.busy ? "posting…" : s.simulate ? "connected (simulation)" : "connected" + (s.account ? " · @" + s.account : "");
+  chip.className = "chip " + (ready ? "cf" : "bad");
+  $("#apToday").innerHTML = conn ? `${s.today}/${s.cap} posted today` + (capOff() ? ` · <span style="color:var(--warn)">limit off for today</span> <button class="linkbtn" id="apCapOn">turn back on</button>` : "") : "";
+  $("#apHelp").innerHTML = !conn ? HELP_OFF : !s.ready ? esc(s.note) : HELP_ON;
+  $("#apNext").disabled = !can;
+  const posted = (s && s.posted) || {};
+  if (S.apReview === undefined) $("#apReview").checked = !Object.values(posted).some(x => x.state === "posted");
+  document.querySelectorAll("#poGrid [data-ap]").forEach(b => {
+    const i = +b.dataset.ap, st = posted[i], job = s && s.job && s.job.i === i ? s.job : null;
+    const isUp = st && (st.state === "posted" || st.state === "shared_unconfirmed");
+    if (st && st.state === "posted" && !S.posts[i]) { S.posts[i] = 1; save(); const c = document.querySelector(`[data-post="${i}"]`); if (c) c.checked = true; }
+    b.disabled = !can || isUp || (job && ["queued","running","review"].includes(job.state));
+    b.textContent = isUp ? (st.state === "posted" ? "Posted ✓" : "Shared?") : "Post to new account";
+    $("#po-" + i).classList.toggle("posted", !!isUp);
+    let h = "";
+    if (job) {
+      const head = {queued: '<span class="wait">Starting…</span>', running: '<span class="wait">Posting… keep the helper window open</span>',
+        review: '<span class="wait">Waiting for you: check it in the Chrome window and press Share there</span> <button class="b" data-apcancel="1">Cancel</button>',
+        done: '<span class="ok">Done</span>', cancelled: '<span class="mute">Cancelled, nothing posted</span>', error: '<span class="err">Stopped</span>'}[job.state] || esc(job.state);
+      h += head + (job.error ? `<div class="err">${esc(job.error)}</div>` : "") + `<ol>${job.steps.map(x => `<li>${esc(x)}</li>`).join("")}</ol>`;
+    }
+    if (st && st.state === "posted" && !(job && job.state !== "done")) h += `<div>${job ? "" : '<span class="ok">Posted</span> '}${esc((st.at||"").replace("T"," ").slice(0,16))}${st.url ? ` · <a target="_blank" rel="noopener" href="${esc(st.url)}">view post</a>` : ""} · <button class="linkbtn" data-again="${i}">post again</button></div>`;
+    if (st && st.state === "shared_unconfirmed" && !(job && ["queued","running","review"].includes(job.state))) h += `<div class="err">Share was pressed but Instagram's confirmation wasn't seen. Check your profile; if it isn't there, <button class="linkbtn" data-again="${i}">post again</button>.</div>`;
+    if (apErr[i]) h += `<div class="err">${esc(apErr[i])}${apCap[i] ? ` <button class="linkbtn" data-overcap="${i}">Post anyway</button>` : ""}</div>`;
+    const el = $("#apst-" + i); if (el.innerHTML !== h) el.innerHTML = h;
+  });
+}
+async function apPoll(){
+  clearTimeout(apTimer);
+  try {
+    apS = await apFetch("/status");
+    if (apS.locations && !apLocsLoaded) { S.locs = await apFetch("/locations"); apLocsLoaded = true; save(); renderPosts(); }
+  } catch (e) { apS = null; }
+  apPaint();
+  apTimer = setTimeout(apPoll, apS && apS.busy ? 1500 : $("#posts").classList.contains("on") ? 3000 : 15000);
+}
+const capOff = () => S.capOff === today();  // "post anyway" was confirmed today
+const apCap = {};
+async function apPost(i, force){
+  delete apErr[i]; delete apCap[i];
+  const o = poOpt(i);
+  try {
+    await apFetch("/post", {i, force, review: $("#apReview").checked, add_date: $("#apDate").checked,
+      loc: o.loc, tags: o.tags, archive: !!D.PO[i].a && o.arch, order: poSend(i), over_cap: capOff()});
+  } catch (err) { apErr[i] = err.name === "AbortError" ? "The helper didn't answer." : err.message; if (err.code === "cap") apCap[i] = 1; }
+  apPoll();
+}
+$("#apReview").checked = S.apReview ?? true;
+$("#apDate").checked = !!S.apDate;
+$("#apReview").onchange = e => { S.apReview = e.target.checked; save(); };
+$("#apToday").onclick = e => { if (e.target.id === "apCapOn") { delete S.capOff; save(); apPaint(); } };
+$("#apDate").onchange = e => { S.apDate = e.target.checked; save(); };
+$("#apNext").onclick = () => {
+  const inc = $("#poArch").checked, posted = (apS && apS.posted) || {};
+  const next = D.PO.map((p,i)=>({...p,i})).find(p => (inc || !p.a) && !S.posts[p.i] && !posted[p.i]);
+  if (!next) return alert("Everything shown here is already posted or marked reposted.");
+  $("#po-" + next.i).scrollIntoView({behavior: "smooth", block: "center"});
+  apPost(next.i, false);
+};
+$("#poArch").onchange = renderPosts;
+let drag = null;  // drag-and-drop reordering inside one card
+$("#poGrid").addEventListener("dragstart", e => { const it = e.target.closest && e.target.closest(".it"); if (!it) return; drag = {i: +it.dataset.i, k: keyOf(it.dataset.k)}; e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", ""); } catch (err) {} });
+$("#poGrid").addEventListener("dragover", e => { const it = e.target.closest && e.target.closest(".it"); if (drag && it && +it.dataset.i === drag.i) { e.preventDefault(); document.querySelectorAll(".it.drop").forEach(x => x.classList.remove("drop")); it.classList.add("drop"); } });
+$("#poGrid").addEventListener("dragend", () => { drag = null; document.querySelectorAll(".it.drop").forEach(x => x.classList.remove("drop")); });
+$("#poGrid").addEventListener("drop", e => {
+  const it = e.target.closest && e.target.closest(".it"); if (!drag || !it || +it.dataset.i !== drag.i) return;
+  e.preventDefault();
+  const ord = poOrder(drag.i).slice(), from = ord.indexOf(drag.k), to = ord.indexOf(keyOf(it.dataset.k));
+  ord.splice(from, 1); ord.splice(to, 0, drag.k); const i = drag.i; drag = null; setOrder(i, ord, poSkip(i));
+});
+$("#poGrid").onclick = async e => {
+  const d = e.target.dataset;
+  if (d.copy !== undefined) { try{ await navigator.clipboard.writeText(D.PO[d.copy].c); e.target.textContent="Copied ✓"; }catch(err){ prompt("Copy the caption:", D.PO[d.copy].c); } }
+  else if (d.ap !== undefined) apPost(+d.ap, false);
+  else if (d.again !== undefined) { if (confirm("This one may already be on your new account. Post it again anyway? It will be a duplicate if it's there.")) apPost(+d.again, true); }
+  else if (d.overcap !== undefined) {
+    if (!confirm(`You've already posted ${apS ? apS.today : "several"} today. Lots of posts in one day on a new account can make Instagram flag it as spam or restrict it, and your old account was disabled.\n\nTurn the daily limit off for the rest of today and post this one?`)) return;
+    S.capOff = today(); save(); apPost(+d.overcap, false);
+  }
+  else if (d.apcancel !== undefined) { try { await apFetch("/cancel", {}); } catch (err) {} apPoll(); }
+  else if (d.reset !== undefined) {
+    const i = +d.reset, n = poExtra(i).length;
+    if (n && !confirm(`Back to the original photos and order? This also removes the ${n} photo${n > 1 ? "s" : ""} you added.`)) return;
+    if (S.po[i]) delete S.po[i].extra;
+    setOrder(i, [...Array(D.PO[i].items.length).keys()], []);
+  }
+  else if (d.addpc !== undefined) {
+    if (!(apS && apS.ready)) return alert("Start the post helper first (post_helper.bat, or python3 recover.py post): it saves the photos you add next to your other upload files.");
+    apFileFor = +d.addpc; $("#apFile").value = ""; $("#apFile").click();
+  }
+  else if (d.addst !== undefined) openStoryPicker(+d.addst);
+  else if (d.mv !== undefined || d.tg !== undefined || d.rm !== undefined) {
+    const it = e.target.closest(".it"); if (!it) return;
+    const i = +it.dataset.i, k = keyOf(it.dataset.k), ord = poOrder(i).slice(), sk = poSkip(i);
+    if (d.rm !== undefined) removeExtra(i, k);
+    else if (d.mv !== undefined) { const a = ord.indexOf(k), b = a + +d.mv; if (b < 0 || b >= ord.length) return; [ord[a], ord[b]] = [ord[b], ord[a]]; setOrder(i, ord, sk); }
+    else { if (sk.has(k)) { if (poCount(i) >= 20) return alert("A post can have at most 20 photos/videos."); sk.delete(k); } else if (poCount(i) > 1) sk.add(k); else return alert("A post needs at least one photo."); setOrder(i, ord, sk); }
+  }
+};
+/* add photos from this computer: the helper saves them under upload_ready/extra/NN/ */
+let apFileFor = null;
+$("#apFile").onchange = async e => {
+  const i = apFileFor, files = [...e.target.files]; if (i === null || !files.length) return;
+  const errs = [], okExt = /\.(jpe?g|png|heic|heif|webp|avif|mp4|mov)$/i;
+  for (const f of files) if (!okExt.test(f.name)) errs.push(`${f.name}: not a photo or video Instagram takes (use JPG, PNG, HEIC, WEBP, MP4 or MOV)`);
+  const good = files.filter(f => okExt.test(f.name)), room = 20 - poCount(i);
+  if (good.length > room) alert(`A post can have at most 20 photos/videos. Adding the first ${Math.max(room, 0)}.`);
+  const added = [];
+  for (const [n, f] of good.slice(0, Math.max(room, 0)).entries()) {
+    const box = $("#apup-" + i); if (box) box.textContent = `Adding ${n + 1}/${Math.min(good.length, room)}: ${f.name}…`;
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 600000);
+    try {
+      const r = await fetch(`${AP}/upload?post=${i}&name=${encodeURIComponent(f.name)}`, {method: "POST", body: f, signal: ctl.signal,
+        headers: {"X-Post-Token": D.PT, "Content-Type": "application/octet-stream"}});
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "HTTP " + r.status);
+      added.push({src: j.src, vid: j.vid, name: f.name, from: "pc"});
+    } catch (err) { errs.push(err.name === "AbortError" ? `${f.name}: took too long` : err.message.startsWith(`'${f.name}'`) ? err.message : `${f.name}: ${err.message}`); }
+    finally { clearTimeout(t); }
+  }
+  addExtras(i, added);
+  const box = $("#apup-" + i); if (box) box.innerHTML = errs.length ? `<span style="color:var(--bad)">${errs.map(esc).join("<br>")}</span>` : "";
+};
+/* add photos from your old stories */
+let smFor = null, smSel = new Set(), smIo = null;
+const smYears = [...new Set(D.ST.filter(x => x.f).map(x => (x.d || "????").slice(0, 4)))].sort().reverse();
+$("#smYear").innerHTML = smYears.map(y => `<option>${y}</option>`).join("");
+function smFillMonths(){ const y = $("#smYear").value; const ms = [...new Set(D.ST.filter(x => x.f && (x.d || "").startsWith(y)).map(x => x.d.slice(5, 7)))].sort(); $("#smMonth").innerHTML = `<option value="">All months</option>` + ms.map(m => `<option>${m}</option>`).join(""); }
+function openStoryPicker(i){
+  smFor = i; smSel = new Set();
+  const d = (D.PO[i].d || "").slice(0, 7), y = d.slice(0, 4);
+  $("#smYear").value = smYears.includes(y) ? y : smYears[0]; smFillMonths();
+  if ([...$("#smMonth").options].some(o => o.value === d.slice(5, 7))) $("#smMonth").value = d.slice(5, 7);
+  $("#smTitle").textContent = `Add from your stories to post #${i + 1} (room for ${20 - poCount(i)} more)`;
+  $("#stModal").hidden = false; document.body.style.overflow = "hidden"; smRender();
+}
+function smClose(){ $("#stModal").hidden = true; document.body.style.overflow = ""; if (smIo) smIo.disconnect(); $("#smGrid").innerHTML = ""; }
+function smRender(){
+  const y = $("#smYear").value, m = $("#smMonth").value, star = $("#smStar").checked;
+  const list = D.ST.map((x, k) => ({...x, k})).filter(x => x.f && (star ? S.stars[x.stem] : (x.d || "").startsWith(y) && (!m || x.d.slice(5, 7) === m)));
+  $("#smCount").textContent = `${list.length} stories`;
+  $("#smGrid").innerHTML = list.map(x => `<div class="story pick${smSel.has(x.k) ? " sel" : ""}" data-sk="${x.k}">${x.vid ? `<video data-src="${esc(x.f)}" preload="none" muted playsinline></video>` : `<img loading="lazy" src="${esc(thumb(x.stem))}" alt="">`}<span class="tick">✓</span><div class="dt">${esc((x.d || "").replace("T", " "))}${x.vid ? " · video" : ""}</div></div>`).join("");
+  if (smIo) smIo.disconnect();
+  smIo = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { const v = en.target; v.src = v.dataset.src; v.preload = "metadata"; smIo.unobserve(v); } }), {root: $("#stModal .modal-box"), rootMargin: "300px"});
+  document.querySelectorAll("#smGrid video[data-src]").forEach(v => smIo.observe(v));
+  smUpd();
+}
+function smUpd(){ $("#smAdd").disabled = !smSel.size; $("#smAdd").textContent = smSel.size ? `Add ${smSel.size} to post #${smFor + 1}` : "Add selected"; }
+$("#smYear").onchange = () => { smFillMonths(); smRender(); }; $("#smMonth").onchange = smRender; $("#smStar").onchange = smRender;
+$("#smClose").onclick = smClose;
+$("#stModal").onclick = e => { if (e.target.id === "stModal") smClose(); };
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#stModal").hidden) smClose(); });
+$("#smGrid").onclick = e => {
+  const c = e.target.closest(".pick"); if (!c) return;
+  const k = +c.dataset.sk;
+  if (smSel.has(k)) smSel.delete(k); else if (poCount(smFor) + smSel.size < 20) smSel.add(k); else return alert("That would go over 20 photos/videos for this post.");
+  c.classList.toggle("sel", smSel.has(k)); smUpd();
+};
+$("#smAdd").onclick = () => {
+  const items = [...smSel].sort((a, b) => (D.ST[a].d || "").localeCompare(D.ST[b].d || "")).map(k => ({src: D.ST[k].f, vid: D.ST[k].vid, name: "story " + (D.ST[k].d || "").replace("T", " "), from: "story"}));
+  const i = smFor; smClose(); addExtras(i, items);
+};
+$("#poGrid").onchange = e => {
+  const t = e.target, d = t.dataset;
+  if (d.post !== undefined) { if (t.checked) S.posts[d.post]=1; else delete S.posts[d.post]; save(); renderPosts(); }
+  else if (d.loc !== undefined) {
+    let v = t.value;
+    if (v === "__custom") v = (prompt("Place name to search on Instagram (e.g. Central Park, New York):", "") || "").trim() || poOpt(d.loc).loc;
+    (S.po[d.loc] ||= {}).loc = v; save(); renderPosts();
+  }
+  else if (d.tags !== undefined) { (S.po[d.tags] ||= {}).tags = t.checked; save(); }
+  else if (d.arch !== undefined) { (S.po[d.arch] ||= {}).arch = t.checked; save(); }
+};
+
+/* ---------- saved ---------- */
+const colOpts = [["__all","All saved posts (" + D.SV.all.length + ")"], ...D.SV.cols.map((c,i)=>[String(i), "Collection: " + c.n + " (" + c.items.length + ")"]), ["__none","Saved, not in any collection"]];
+$("#svCol").innerHTML = colOpts.map(([v,l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join("");
+const byUrl = Object.fromEntries(D.SV.all.map(x=>[x.url,x]));
+const inCol = new Set(D.SV.cols.flatMap(c=>c.items));
+function svList(){
+  const v = $("#svCol").value;
+  let urls = v==="__all" ? D.SV.all.map(x=>x.url) : v==="__none" ? D.SV.all.map(x=>x.url).filter(u=>!inCol.has(u)) : D.SV.cols[+v].items;
+  if ($("#svHideDone").checked) urls = urls.filter(u => !S.saved[u]);
+  return urls;
+}
+function renderSaved(){
+  const urls = svList();
+  $("#svCount").textContent = `${Object.keys(S.saved).length} of ${D.SV.all.length} re-saved · ${urls.length} shown`;
+  $("#svBody").innerHTML = urls.map(u => { const x = byUrl[u] || {url:u}; return `<tr class="${S.saved[u]?"done":""}"><td><input type="checkbox" data-u="${esc(u)}" ${S.saved[u]?"checked":""}></td>
+    <td><a href="${esc(u)}" target="igwin" rel="noopener">${esc(u.replace("https://www.instagram.com/",""))}</a></td>
+    <td>${x.o?`<a href="${ig(x.o)}" target="igwin" rel="noopener">@${esc(x.o)}</a>`:""}</td><td class="hide-sm small mute">${esc(x.c||"")}</td></tr>`; }).join("");
+}
+$("#svCol").onchange = renderSaved; $("#svHideDone").onchange = renderSaved;
+$("#svBody").onchange = e => { const u = e.target.dataset.u; if (u){ if (e.target.checked) S.saved[u]=1; else delete S.saved[u]; save(); renderSaved(); } };
+$("#svNext").onclick = () => { const u = svList().find(u => !S.saved[u]); if (!u) return alert("All done in this view."); window.open(u,"igwin"); S.saved[u]=1; save(); renderSaved(); };
+
+/* ---------- chats ---------- */
+let chLimit = 100;
+function renderChats(){
+  const q = $("#chSearch").value.trim().toLowerCase(), b = $("#chBox").value;
+  const list = D.CH.filter(c => (!b || (b==="g" ? c.g : c.box===b)) && (!q || (c.t+" "+c.u.join(" ")+" "+c.pp.join(" ")).toLowerCase().includes(q)));
+  $("#chCount").textContent = `${list.length} threads`;
+  $("#chBody").innerHTML = list.slice(0,chLimit).map(c => `<tr><td>${esc(c.t)} ${c.g?'<span class="chip">group</span>':""}${c.box!=="inbox"?'<span class="chip">request</span>':""}<div class="small mute">${esc(c.first)} → ${esc(c.last)}</div></td>
+    <td class="hide-sm small">${c.u.slice(0,3).map(u=>`<a href="${ig(u)}" target="igwin" rel="noopener">@${esc(u)}</a>`).join(" ")}${c.u.length>3?" …":""}</td>
+    <td class="n">${c.n.toLocaleString()}</td><td class="n hide-sm small">${c.ph+c.vi+c.au||""}</td><td class="hide-sm small mute">${esc(c.last)}</td>
+    <td><a href="${esc(c.f)}" target="_blank">Open</a></td></tr>`).join("");
+  $("#chMore").style.display = list.length > chLimit ? "" : "none";
+}
+$("#chSearch").oninput = () => { chLimit=100; renderChats(); }; $("#chBox").onchange = () => { chLimit=100; renderChats(); };
+$("#chMore").onclick = () => { chLimit += 200; renderChats(); };
+
+/* ---------- stories ---------- */
+const years = [...new Set(D.ST.map(x=>(x.d||"????").slice(0,4)))].sort().reverse();
+$("#stYear").innerHTML = years.map(y=>`<option>${y}</option>`).join("");
+function fillMonths(){ const y=$("#stYear").value; const ms=[...new Set(D.ST.filter(x=>(x.d||"").startsWith(y)).map(x=>x.d.slice(5,7)))].sort(); $("#stMonth").innerHTML = `<option value="">All months</option>` + ms.map(m=>`<option>${m}</option>`).join(""); }
+fillMonths();
+let io;
+function renderStories(){
+  const y=$("#stYear").value, m=$("#stMonth").value, pick=$("#stPick").checked;
+  const list = D.ST.filter(x => pick ? S.stars[x.stem] : (x.d||"").startsWith(y) && (!m || x.d.slice(5,7)===m));
+  $("#stCount").textContent = `${list.length} stories · ${Object.keys(S.stars).length} ★ picked`;
+  $("#stGrid").innerHTML = list.map(x => `<div class="story">${x.vid ? `<video data-src="${esc(x.src)}" preload="none" controls muted playsinline></video>` : `<img loading="lazy" src="${esc(thumb(x.stem))}" alt="">`}
+    <div class="row" style="justify-content:space-between"><span class="dt">${esc((x.d||"").replace("T"," "))}</span><button class="b small" data-star="${esc(x.stem)}" style="padding:1px 7px">${S.stars[x.stem]?"★":"☆"}</button></div></div>`).join("");
+  if (io) io.disconnect();
+  io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting){ const v=en.target; v.src=v.dataset.src; v.preload="metadata"; io.unobserve(v); } }), {rootMargin:"400px"});
+  document.querySelectorAll("#stGrid video[data-src]").forEach(v => io.observe(v));
+}
+$("#stYear").onchange = () => { fillMonths(); renderStories(); }; $("#stMonth").onchange = renderStories; $("#stPick").onchange = renderStories;
+$("#stGrid").onclick = e => { const k = e.target.dataset.star; if (k){ if (S.stars[k]) delete S.stars[k]; else S.stars[k]=1; save(); e.target.textContent = S.stars[k]?"★":"☆"; $("#stCount").textContent = $("#stCount").textContent.replace(/\d+ ★/, Object.keys(S.stars).length+" ★"); } };
+
+/* ---------- lists ---------- */
+$("#profTbl").innerHTML = Object.entries(D.PROFILE).filter(([k,v])=>v).map(([k,v]) => `<tr><th style="width:150px">${esc(k)}</th><td>${esc(v)}</td><td style="width:90px"><button class="b small" data-cp="${esc(v)}">Copy</button></td></tr>`).join("");
+$("#profTbl").onclick = async e => { const v = e.target.dataset.cp; if (v!==undefined){ try{ await navigator.clipboard.writeText(v); e.target.textContent="Copied ✓"; }catch(err){ prompt("Copy:", v); } } };
+const ul = arr => arr.length ? `<table>${arr.map(p=>`<tr><td><a href="${ig(p.u)}" target="igwin" rel="noopener">@${esc(p.u)}</a></td><td>${why(p)}</td><td class="small mute">${p.dm?p.dm+" DMs":""}</td></tr>`).join("")}</table>` : '<p class="mute">None</p>';
+$("#lCF").innerHTML = ul(D.P.filter(p=>p.cf));
+$("#lHS").innerHTML = ul(D.P.filter(p=>p.hs));
+$("#lBL").innerHTML = ul(D.P.filter(p=>p.bl||p.rs).map(p=>({...p})));
+
+/* ---------- boot ---------- */
+renderPeople(); renderPosts(); renderSaved(); renderChats();
+let startTab = "start"; try { startTab = localStorage.getItem(KEY+":tab") || "start"; } catch(e){}
+show(TABS.some(t=>t[0]===startTab) ? startTab : "start");
+if (startTab !== "posts") apPoll();
+</script>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Follow-back Check</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#16181d;--mute:#5d6470;--line:#e3e6ea;--acc:#3b5bdb;--acc-ink:#fff;--ok:#2b8a3e;--warn:#b35c00;--bad:#c92a2a;--chip:#eef1f5}
+@media (prefers-color-scheme:dark){:root{--bg:#121417;--card:#1b1e23;--ink:#e8eaed;--mute:#9aa1ab;--line:#2c3138;--acc:#748ffc;--acc-ink:#0b0d10;--ok:#69db7c;--warn:#ffa94d;--bad:#ff8787;--chip:#252a31}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--card);border-bottom:1px solid var(--line)}
+.wrap{max-width:1100px;margin:0 auto;padding:14px 16px}
+.me{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.me h1{font-size:18px;margin:0}
+.big{width:56px;height:56px;border-radius:50%;flex:none}
+.mute{color:var(--mute)}.small{font-size:12px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:14px}
+.kpi{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;text-align:left;color:inherit;font:inherit}
+.kpi b{display:block;font-size:24px;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--mute)}
+.kpi.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
+.kpi.hot b{color:var(--bad)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.bar{position:sticky;top:0;z-index:3}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input[type=search],select{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font:inherit}
+input[type=search]{flex:1;min-width:160px}
+button.b{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 10px;cursor:pointer;font:inherit}
+button.b:hover{border-color:var(--acc)}
+.sub{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.sub button{border:1px solid var(--line);background:none;color:var(--mute);border-radius:999px;padding:4px 11px;cursor:pointer;font:inherit;font-size:13px}
+.sub button.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink);font-weight:600}
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:8px}
+.u{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+.u.ign{opacity:.5}
+.av{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:700;color:#fff;font-size:15px;object-fit:cover}
+.who{min-width:0;flex:1}
+.who a{font-weight:600;color:var(--ink);text-decoration:none;word-break:break-all}
+.who a:hover{color:var(--acc);text-decoration:underline}
+.who .nm{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:inline-block;background:var(--chip);border-radius:999px;padding:0 7px;font-size:11px;margin:2px 3px 0 0;white-space:nowrap}
+.chip.cf{color:var(--ok)}.chip.v{color:var(--acc)}.chip.old{color:var(--warn)}
+.prog{height:8px;background:var(--chip);border-radius:99px;overflow:hidden;margin:4px 0 2px}.prog i{display:block;height:100%;background:var(--ok)}
+.pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.warn{border-left:4px solid var(--warn)}
+.empty{padding:30px;text-align:center;color:var(--mute)}
+table{border-collapse:collapse;width:100%}td,th{padding:6px;border-bottom:1px solid var(--line);text-align:left}th{font-size:12px;color:var(--mute)}td.n{text-align:right;font-variant-numeric:tabular-nums}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="me" id="me"></div>
+  <div class="kpis" id="kpis"></div>
+</div></header>
+<div class="wrap">
+  <div id="notes"></div>
+  <div class="card bar">
+    <div class="sub" id="sub"></div>
+    <div class="row">
+      <input type="search" id="q" placeholder="Search username or name">
+      <select id="sort"><option value="api">Most recent first</option><option value="az">A → Z</option><option value="old">Old-account closeness</option></select>
+      <label class="small"><input type="checkbox" id="hideV"> hide verified</label>
+      <label class="small"><input type="checkbox" id="showIgn"> show ignored</label>
+      <button class="b" id="copy">Copy usernames</button>
+      <button class="b" id="csv">CSV</button>
+    </div>
+    <div class="small mute" id="count" style="margin-top:6px"></div>
+  </div>
+  <div id="extra"></div>
+  <div class="list" id="list"></div>
+  <div class="card" style="margin-top:14px"><h3 style="margin:0 0 6px;font-size:14px">Scan history</h3><table id="hist"></table>
+  <p class="small mute">To refresh, double-click <code>check_followers.bat</code> (or run <code>python3 recover.py followers</code>). "Ignore" keeps an account out of the lists (e.g. celebrities); it's saved in this browser.</p></div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const D = /*__DATA__*/null;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ig = u => "https://www.instagram.com/" + encodeURIComponent(u).replace(/%2E/g,".") + "/";
+const KEY = "igfc:v1";
+let IGN = {}; try { IGN = JSON.parse(localStorage.getItem(KEY+":ignore") || "{}"); } catch(e) {}
+const saveIgn = () => { try { localStorage.setItem(KEY+":ignore", JSON.stringify(IGN)); } catch(e) {} };
+function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("on"); setTimeout(()=>el.classList.remove("on"),1600); }
+
+/* ---------- data ---------- */
+const byU = {}; [...D.following, ...D.followers].forEach(u => byU[u.username] = Object.assign(byU[u.username]||{}, u));
+const ufo = D.following.map(u=>u.username), ufl = D.followers.map(u=>u.username);
+const FO = new Set(ufo), FL = new Set(ufl);
+const OLD = D.old || {};
+const hasOld = Object.keys(OLD).length > 0;
+const info = u => byU[u] || {username:u, name:"", pic:"", verified:false, private:false};
+const rank = new Map(); ufo.forEach((u,i)=>rank.set(u,i)); ufl.forEach((u,i)=>{ if(!rank.has(u)) rank.set(u, 100000+i); });
+
+const L = {
+  nfb: ufo.filter(u => !FL.has(u)),
+  fans: ufl.filter(u => !FO.has(u)),
+  mut: ufo.filter(u => FL.has(u)),
+};
+let CH = null;
+if (D.prev){
+  const pFO = new Set(D.prev.following), pFL = new Set(D.prev.followers);
+  CH = {
+    newF: ufl.filter(u => !pFL.has(u)),
+    lostF: D.prev.followers.filter(u => !FL.has(u)),
+    youF: ufo.filter(u => !pFO.has(u)),
+    youU: D.prev.following.filter(u => !FO.has(u)),
+  };
+}
+let OLDL = null;
+if (hasOld){
+  const olds = Object.entries(OLD);
+  const oldFo = olds.filter(([u,o]) => o.fo && "12345".includes(o.t)).map(([u])=>u);
+  const oldFl = olds.filter(([u,o]) => o.fl).map(([u])=>u);
+  const oldMut = olds.filter(([u,o]) => o.m).map(([u])=>u);
+  const tierSort = (a,b) => (OLD[a].t > OLD[b].t) - (OLD[a].t < OLD[b].t) || (OLD[b].dm - OLD[a].dm);
+  OLDL = {
+    waiting: ufo.filter(u => OLD[u] && OLD[u].fl && !FL.has(u)).sort(tierSort),
+    todo: oldFo.filter(u => !FO.has(u)).sort(tierSort),
+    back: ufl.filter(u => OLD[u] && OLD[u].fl),
+    missing: oldFl.filter(u => !FL.has(u) && !FO.has(u)).sort(tierSort),
+    stats: {
+      mut: [oldMut.filter(u => FO.has(u) && FL.has(u)).length, oldMut.length],
+      fo: [oldFo.filter(u => FO.has(u)).length, oldFo.length],
+      fl: [oldFl.filter(u => FL.has(u)).length, oldFl.length],
+    }
+  };
+}
+
+/* ---------- header ---------- */
+const me = D.me || {};
+const initials = s => (String(s||"?").replace(/[^A-Za-z0-9]/g,"")[0] || "?").toUpperCase();
+const hue = s => { let h=0; for (const c of String(s)) h = (h*31 + c.charCodeAt(0)) % 360; return h; };
+const avatar = (u, cls="av") => { const x = info(u); const bg = `background:hsl(${hue(u)} 45% 45%)`;
+  return x.pic ? `<img class="${cls}" src="${esc(x.pic)}" referrerpolicy="no-referrer" alt="" data-u="${esc(u)}" style="${bg}">` : `<span class="${cls}" style="${bg}">${esc(initials(u))}</span>`; };
+document.addEventListener("error", e => { const t = e.target; if (t.tagName === "IMG" && t.dataset.u !== undefined){ const s = document.createElement("span"); s.className = t.className; s.style.cssText = t.style.cssText; s.textContent = initials(t.dataset.u); t.replaceWith(s); } }, true);
+const when = s => s ? new Date(s).toLocaleString([], {dateStyle:"medium", timeStyle:"short"}) : "";
+$("#me").innerHTML = `${me.pic ? `<img class="big" src="${esc(me.pic)}" referrerpolicy="no-referrer" alt="" data-u="${esc(me.username||"?")}" style="background:hsl(${hue(me.username||"")} 45% 45%)">` : `<span class="av big" style="background:hsl(${hue(me.username||"")} 45% 45%)">${esc(initials(me.username))}</span>`}
+  <div><h1>@${esc(me.username || "your account")}</h1>
+  <div class="mute small">${esc(me.name||"")} · scanned ${esc(when(D.taken))}${D.source==="export"?" (from data export)":""}${D.prev?` · compared with ${esc(when(D.prev.taken))}`:""}</div></div>`;
+
+/* ---------- views ---------- */
+const VIEWS = [
+  {id:"nfb", label:"Don't follow you back", n:L.nfb.length, hot:true},
+  {id:"fans", label:"You don't follow back", n:L.fans.length},
+  {id:"mut", label:"Mutuals", n:L.mut.length},
+  {id:"chg", label:"Changes since last scan", n: CH ? CH.newF.length + CH.lostF.length : "–"},
+];
+if (OLDL) VIEWS.push({id:"old", label:"Old account: waiting on", n:OLDL.waiting.length});
+$("#kpis").innerHTML = `<div class="kpi" style="cursor:default"><b>${D.followers.length}</b><span>followers${me.followers!=null&&me.followers!==D.followers.length?` (Instagram says ${esc(me.followers)})`:""}</span></div>
+  <div class="kpi" style="cursor:default"><b>${D.following.length}</b><span>following${me.following!=null&&me.following!==D.following.length?` (Instagram says ${esc(me.following)})`:""}</span></div>` +
+  VIEWS.map(v => `<button class="kpi ${v.hot&&v.n?"hot":""}" data-v="${v.id}"><b>${esc(v.n)}</b><span>${esc(v.label)}</span></button>`).join("");
+
+const SUBS = {
+  chg: CH ? [["newF","New followers",CH.newF],["lostF","Unfollowed you",CH.lostF],["youF","You followed",CH.youF],["youU","You unfollowed",CH.youU]] : [],
+  old: OLDL ? [["waiting","You re-followed, they haven't followed back",OLDL.waiting],["todo","Old follows you haven't re-followed",OLDL.todo],["missing","Old followers not connected yet",OLDL.missing],["back","Old followers back with you",OLDL.back]] : [],
+};
+let view = "nfb", sub = null;
+try { const st = JSON.parse(localStorage.getItem(KEY+":view")||"null"); if (st && VIEWS.some(v=>v.id===st.v)) { view = st.v; sub = st.s; } } catch(e) {}
+
+function current(){
+  if (SUBS[view]) { const s = SUBS[view].find(x=>x[0]===sub) || SUBS[view][0]; if (!s) return []; sub = s[0]; return s[2]; }
+  return L[view] || [];
+}
+function chips(u){
+  const x = info(u), o = OLD[u], c = [];
+  if (x.verified) c.push('<span class="chip v">verified</span>');
+  if (x.private) c.push('<span class="chip">private</span>');
+  if (view !== "mut" && FO.has(u) && FL.has(u)) c.push('<span class="chip">mutual</span>');
+  if (o){
+    if (o.cf) c.push('<span class="chip cf">old close friend</span>');
+    else if (o.fav) c.push('<span class="chip cf">old favourite</span>');
+    else if (o.m) c.push('<span class="chip old">old mutual</span>');
+    else if (o.fo) c.push('<span class="chip old">old following</span>');
+    else if (o.fl) c.push('<span class="chip old">old follower</span>');
+    if (o.dm) c.push(`<span class="chip">${o.dm} old DMs</span>`);
+  }
+  return c.join("");
+}
+function filtered(){
+  const q = $("#q").value.trim().toLowerCase(), hv = $("#hideV").checked, si = $("#showIgn").checked;
+  let arr = current().filter(u => (si || !IGN[u]) && (!hv || !info(u).verified) && (!q || (u + " " + info(u).name).toLowerCase().includes(q)));
+  const s = $("#sort").value;
+  if (s === "az") arr = [...arr].sort((a,b)=>a.localeCompare(b));
+  else if (s === "old") arr = [...arr].sort((a,b)=> ((OLD[a]?.t||"9") > (OLD[b]?.t||"9")) - ((OLD[a]?.t||"9") < (OLD[b]?.t||"9")) || ((OLD[b]?.dm||0)-(OLD[a]?.dm||0)));
+  else if (view !== "old") arr = [...arr].sort((a,b)=>(rank.get(a)??1e9)-(rank.get(b)??1e9));
+  return arr;
+}
+function render(){
+  document.querySelectorAll(".kpi[data-v]").forEach(k => k.classList.toggle("on", k.dataset.v === view));
+  const arr = filtered();
+  $("#sub").innerHTML = (SUBS[view]||[]).map(([id,l,a]) => `<button data-s="${id}" class="${id===sub?"on":""}">${esc(l)} · ${a.length}</button>`).join("");
+  const ign = current().filter(u => IGN[u]).length;
+  $("#count").textContent = `${arr.length} shown` + (ign && !$("#showIgn").checked ? ` · ${ign} ignored hidden` : "");
+  let extra = "";
+  if (view === "chg" && !CH) extra = `<div class="card empty">This is your first scan. Run the checker again later to see who followed or unfollowed you.</div>`;
+  if (view === "old" && OLDL){
+    const pr = ([a,b], l) => `<div><b>${a}</b> / ${b} <span class="mute small">${l}</span><div class="prog"><i style="width:${b?(100*a/b).toFixed(1):0}%"></i></div></div>`;
+    extra = `<div class="card"><div class="pg">${pr(OLDL.stats.mut,"old mutuals are mutual again")}${pr(OLDL.stats.fo,"old follows re-followed (tiers 1–5)")}${pr(OLDL.stats.fl,"old followers following you")}</div>
+      <p class="small mute" style="margin:8px 0 0">"Waiting on" = people who followed your old account, whom you've followed again, but who haven't followed you back. A quick DM saying it's your new account usually fixes it.</p></div>`;
+  }
+  $("#extra").innerHTML = extra;
+  $("#list").innerHTML = arr.length ? arr.slice(0, 2000).map(u => `<div class="u ${IGN[u]?"ign":""}">${avatar(u)}
+      <div class="who"><a href="${ig(u)}" target="_blank" rel="noopener">@${esc(u)}</a><div class="nm">${esc(info(u).name)}</div><div>${chips(u)}</div></div>
+      <button class="b small" data-ign="${esc(u)}" title="Hide from lists">${IGN[u]?"Unignore":"Ignore"}</button></div>`).join("")
+    : (extra && view==="chg" ? "" : `<div class="empty" style="grid-column:1/-1">Nobody here 🎉</div>`);
+  try { localStorage.setItem(KEY+":view", JSON.stringify({v:view, s:sub})); } catch(e) {}
+}
+$("#kpis").onclick = e => { const k = e.target.closest("[data-v]"); if (k){ view = k.dataset.v; sub = null; render(); } };
+$("#sub").onclick = e => { const b = e.target.closest("[data-s]"); if (b){ sub = b.dataset.s; render(); } };
+["#q"].forEach(id => $(id).oninput = render);
+["#sort","#hideV","#showIgn"].forEach(id => $(id).onchange = render);
+$("#list").onclick = e => { const u = e.target.dataset.ign; if (u !== undefined){ if (IGN[u]) delete IGN[u]; else IGN[u] = 1; saveIgn(); render(); } };
+$("#copy").onclick = async () => { const t = filtered().join("\n"); try { await navigator.clipboard.writeText(t); toast(`Copied ${filtered().length} usernames`); } catch(e) { prompt("Copy:", t); } };
+$("#csv").onclick = () => { const rows = [["username","name","profile","verified","private","old_relationship"]].concat(filtered().map(u => { const x=info(u), o=OLD[u]; return [u, x.name, ig(u), x.verified, x.private, o ? (o.cf?"close friend":o.m?"mutual":o.fo?"following":o.fl?"follower":"other") : ""]; }));
+  const csv = rows.map(r => r.map(v => `"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿"+csv],{type:"text/csv"})); a.download = `${view}${sub?"-"+sub:""}-${(D.taken||"").slice(0,10)}.csv`; a.click(); };
+
+const notes = [];
+if (!D.complete) notes.push("Instagram's own follower/following count is higher than what the scan received. Some accounts (deactivated or restricted) may be missing, so treat “unfollowed you” with care.");
+if (D.prev && !D.prev.complete) notes.push("The previous scan was incomplete, so some “changes” may not be real.");
+$("#notes").innerHTML = notes.map(n => `<div class="card warn small">${esc(n)}</div>`).join("");
+$("#hist").innerHTML = `<tr><th>Scan</th><th class="n">Followers</th><th class="n">Following</th></tr>` + [...D.history].reverse().map((h,i,a) => { const p = a[i+1]; const d = (x,y) => p ? ` <span class="small ${x-y>0?"":"mute"}">(${x-y>=0?"+":""}${x-y})</span>` : "";
+  return `<tr><td>${esc(when(h.t))}</td><td class="n">${h.fl}${p?d(h.fl,p.fl):""}</td><td class="n">${h.fo}${p?d(h.fo,p.fo):""}</td></tr>`; }).join("");
+render();
+</script>
+</body>
+</html>

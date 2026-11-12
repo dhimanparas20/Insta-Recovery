@@ -1,0 +1,11 @@
+# Your personal data. Never commit or upload these.
+export/*
+!export/README.md
+recovery/
+instagram-*/
+*.zip
+
+# Python
+.venv/
+__pycache__/
+*.pyc
